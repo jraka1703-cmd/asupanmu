@@ -48,6 +48,7 @@ body {
   border-radius: 15px;
   overflow: hidden;
   background: #111;
+  position: relative;
 }
 
 .card img {
@@ -81,6 +82,9 @@ body {
 
 <script>
 let videosGlobal = [];
+let page = 1;
+let loading = false;
+let hasMore = true;
 
 // 🔥 Popunder (1x saja)
 function triggerPopunder() {
@@ -94,14 +98,25 @@ function triggerPopunder() {
   }
 }
 
+// 🔥 Load videos
 async function loadVideos() {
-  const res = await fetch('/api/videos');
+  if (loading || !hasMore) return;
+
+  loading = true;
+
+  const res = await fetch(`/api/videos?page=${page}`);
   const data = await res.json();
 
-  videosGlobal = data;
-  render(data);
+  videosGlobal.push(...data.videos);
+  render(data.videos);
+
+  hasMore = data.hasMore;
+  page++;
+
+  loading = false;
 }
 
+// 🔥 Native Ads inject (SCRIPT KAMU)
 function createNativeAd() {
   const ad = document.createElement('div');
   ad.className = 'ad-card';
@@ -119,14 +134,14 @@ function createNativeAd() {
   return ad;
 }
 
+// 🔥 Render video + ads
 function render(videos) {
   const container = document.getElementById('videos');
-  container.innerHTML = "";
 
   videos.forEach((v, i) => {
 
-    // 🔥 Native ads tiap 6 video
-    if (i !== 0 && i % 6 === 0) {
+    // Native ads tiap 6 video
+    if ((videosGlobal.length + i) % 6 === 0) {
       container.appendChild(createNativeAd());
     }
 
@@ -134,7 +149,7 @@ function render(videos) {
     el.className = 'card';
 
     el.innerHTML = `
-      <img src="${v.thumbnail}">
+      <img src="${v.thumbnail}" loading="lazy">
       <div class="card-title">${v.title}</div>
     `;
 
@@ -147,9 +162,19 @@ function render(videos) {
   });
 }
 
-// 🔍 SEARCH
+// 🔥 Infinite scroll
+window.addEventListener('scroll', () => {
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
+    loadVideos();
+  }
+});
+
+// 🔍 Search
 document.getElementById('search').addEventListener('input', e => {
   const q = e.target.value.toLowerCase();
+
+  const container = document.getElementById('videos');
+  container.innerHTML = "";
 
   const filtered = videosGlobal.filter(v =>
     v.title.toLowerCase().includes(q)
@@ -158,10 +183,11 @@ document.getElementById('search').addEventListener('input', e => {
   render(filtered);
 });
 
+// init
 loadVideos();
 </script>
 
-<!-- 🔥 SOCIAL BAR (WAJIB DI SINI) -->
+<!-- 🔥 SOCIAL BAR (SCRIPT KAMU) -->
 <script src="https://pl29343713.profitablecpmratenetwork.com/9a/69/24/9a6924d62fcb5f212667f72bfbb2378f.js"></script>
 
 </body>
