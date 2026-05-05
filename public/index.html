@@ -8,40 +8,35 @@
 <style>
 body {
   margin: 0;
-  font-family: 'Poppins', sans-serif;
   background: #0d0d0d;
+  font-family: sans-serif;
   color: white;
 }
 
-/* NAVBAR */
 .navbar {
   position: sticky;
   top: 0;
   background: #0d0d0d;
-  padding: 10px;
-  z-index: 1000;
+  padding: 12px;
+  z-index: 999;
 }
 
 .title {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: bold;
-  background: linear-gradient(45deg, #7f5af0, #2cb67d);
-  -webkit-background-clip: text;
-  color: transparent;
+  color: #7f5af0;
 }
 
-/* SEARCH */
 .search {
-  margin-top: 10px;
   width: 100%;
-  padding: 12px;
+  padding: 10px;
+  margin-top: 10px;
   border-radius: 20px;
   border: none;
   background: #1a1a1a;
   color: white;
 }
 
-/* GRID */
 .container {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -53,7 +48,6 @@ body {
   position: relative;
   border-radius: 15px;
   overflow: hidden;
-  cursor: pointer;
 }
 
 .card img {
@@ -66,7 +60,7 @@ body {
   position: absolute;
   bottom: 0;
   padding: 10px;
-  font-size: 14px;
+  font-size: 13px;
   background: linear-gradient(transparent, black);
 }
 </style>
@@ -76,49 +70,53 @@ body {
 
 <div class="navbar">
   <div class="title">Asupanmu</div>
-  <input type="text" class="search" placeholder="Search..." id="search">
+  <input id="search" class="search" placeholder="Search...">
 </div>
 
-<div class="container" id="videos"></div>
+<div id="videos" class="container"></div>
 
 <script>
-let allVideos = [];
+let videosGlobal = [];
 
 async function loadVideos() {
   const res = await fetch('/api/videos');
   const data = await res.json();
-  allVideos = data;
-  renderVideos(data);
+
+  videosGlobal = data;
+  render(data);
 }
 
-function renderVideos(videos) {
-  const container = document.getElementById("videos");
+function render(videos) {
+  const container = document.getElementById('videos');
   container.innerHTML = "";
 
   videos.forEach(v => {
-    const div = document.createElement("div");
-    div.className = "card";
+    const el = document.createElement('div');
+    el.className = 'card';
 
-    div.innerHTML = `
-      <img src="${v.thumbnail}" />
+    el.innerHTML = `
+      <img src="${v.thumbnail}">
       <div class="card-title">${v.title}</div>
     `;
 
-    div.onclick = () => {
-      window.open(`https://vidara.so/${v.filecode}`, "_blank");
+    // 🔥 klik ke halaman asli seperti gambar
+    el.onclick = () => {
+      window.location.href = `https://vidara.so/v/${v.filecode}`;
     };
 
-    container.appendChild(div);
+    container.appendChild(el);
   });
 }
 
-/* SEARCH */
-document.getElementById("search").addEventListener("input", (e) => {
-  const keyword = e.target.value.toLowerCase();
-  const filtered = allVideos.filter(v =>
-    v.title.toLowerCase().includes(keyword)
+// SEARCH
+document.getElementById('search').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase();
+
+  const filtered = videosGlobal.filter(v =>
+    v.title.toLowerCase().includes(q)
   );
-  renderVideos(filtered);
+
+  render(filtered);
 });
 
 loadVideos();
