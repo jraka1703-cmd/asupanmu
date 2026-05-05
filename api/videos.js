@@ -1,31 +1,28 @@
 export default async function handler(req, res) {
   const API_KEY = process.env.VIDARA_API_KEY;
 
-  let page = 1;
-  let allVideos = [];
-  let hasMore = true;
+  const page = Number(req.query.page || 1);
 
   try {
-    while (hasMore && page <= 20) { // batas aman (hindari overload)
-      const response = await fetch(
-        `https://api.vidara.so/v1/video/list?api_key=${API_KEY}&page=${page}&limit=100`
-      );
+    const response = await fetch(
+      `https://api.vidara.so/v1/video/list?api_key=${API_KEY}&page=${page}&limit=20`
+    );
 
-      const data = await response.json();
-      const videos = data?.result?.videos || [];
+    const data = await response.json();
+    const videos = data?.result?.videos || [];
 
-      allVideos.push(...videos);
+    // 🔥 Cache lebih lama (biar hemat request & cepat)
+    res.setHeader(
+      "Cache-Control",
+      "s-maxage=300, stale-while-revalidate=600"
+    );
 
-      if (videos.length < 100) {
-        hasMore = false;
-      }
+    res.status(200).json({
+      page,
+      videos,
+      hasMore: videos.length > 0
+    });
 
-      page++;
-    }
-
-    res.setHeader("Cache-Control", "s-maxage=120, stale-while-revalidate");
-
-    res.status(200).json(allVideos);
   } catch (err) {
     res.status(500).json({ error: "Gagal ambil data" });
   }
