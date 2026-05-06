@@ -1,3 +1,4 @@
+
 export default async function handler(req, res) {
   const vidaraKey = process.env.VIDARA_API_KEY;
   const vizeyKey = process.env.VIZEY_API_KEY;
@@ -5,49 +6,47 @@ export default async function handler(req, res) {
   const page = Number(req.query.page || 1);
 
   try {
-    let vidaraVideos = [];
-    let vizeyVideos = [];
+    let allVideos = [];
 
     // ================= VIDARA =================
     try {
-      const vidaraRes = await fetch(
+      const r = await fetch(
         `https://api.vidara.so/v1/video/list?api_key=${vidaraKey}&page=${page}&limit=10`
       );
-      const vidaraData = await vidaraRes.json();
+      const d = await r.json();
 
-      vidaraVideos = (vidaraData?.result?.videos || []).map(v => ({
-        title: v.title || "No title",
+      const vids = (d?.result?.videos || []).map(v => ({
+        title: v.title,
         thumbnail: v.thumbnail,
         link: `https://vidara.so/v/${v.filecode}`,
         source: "Vidara"
       }));
 
+      allVideos.push(...vids);
     } catch (e) {
-      console.log("Vidara error:", e);
+      console.log("Vidara error");
     }
 
     // ================= VIZEY =================
     try {
-      const vizeyRes = await fetch(
+      const r = await fetch(
         `https://vizey.co/api/v1/list?apikey=${vizeyKey}&page=${page}`
       );
-      const vizeyData = await vizeyRes.json();
+      const d = await r.json();
 
-      vizeyVideos = (vizeyData?.data || []).map(v => ({
-        title: v.title || "No title",
+      console.log("VIZEY DATA:", d);
+
+      const vids = (d?.data || []).map(v => ({
+        title: v.title,
         thumbnail: v.thumbnail,
-        link: v.url || "#",
+        link: v.url || v.embed_url,
         source: "Vizey"
       }));
 
+      allVideos.push(...vids);
     } catch (e) {
-      console.log("Vizey error:", e);
+      console.log("Vizey error");
     }
-
-    // 🔥 fallback kalau salah satu kosong
-    const allVideos = [...vidaraVideos, ...vizeyVideos];
-
-    console.log("TOTAL VIDEO:", allVideos.length);
 
     res.status(200).json({
       videos: allVideos,
@@ -55,7 +54,6 @@ export default async function handler(req, res) {
     });
 
   } catch (err) {
-    console.error("API ERROR:", err);
-    res.status(500).json({ error: "Gagal ambil data" });
+    res.status(500).json({ error: "Server error" });
   }
 }
