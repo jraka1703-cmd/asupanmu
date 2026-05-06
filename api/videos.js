@@ -2,6 +2,7 @@ export default async function handler(req, res) {
   const vidaraKey = process.env.VIDARA_API_KEY;
   const vizeyKey = process.env.VIZEY_API_KEY;
 
+  let page = parseInt(req.query.page || "1");
   let allVideos = [];
 
   try {
@@ -9,7 +10,7 @@ export default async function handler(req, res) {
     if (vidaraKey) {
       try {
         const r1 = await fetch(
-          `https://api.vidara.so/v1/video/list?api_key=${vidaraKey}&page=1&limit=20`
+          `https://api.vidara.so/v1/video/list?api_key=${vidaraKey}&page=${page}&limit=20`
         );
         const d1 = await r1.json();
 
@@ -32,16 +33,15 @@ export default async function handler(req, res) {
     if (vizeyKey) {
       try {
         const r2 = await fetch(
-          `https://vizey.co/api/v1/list?apikey=${vizeyKey}&page=1&limit=20`
+          `https://vizey.co/api/v1/list?apikey=${vizeyKey}&page=${page}&limit=20`
         );
 
-        const text = await r2.text(); // 🔥 SAFE PARSE
+        const text = await r2.text();
 
         let d2;
         try {
           d2 = JSON.parse(text);
         } catch {
-          console.log("Vizey bukan JSON:", text);
           d2 = null;
         }
 
@@ -60,28 +60,33 @@ export default async function handler(req, res) {
       }
     }
 
-    // ================= FALLBACK =================
-    if (allVideos.length === 0) {
-      return res.status(200).json({
-        videos: [],
-        error: "No data from APIs"
-      });
+    // ================= REMOVE DUPLICATE =================
+    const seen = new Set();
+    const unique = [];
+
+    for (const v of allVideos) {
+      if (!seen.has(v.link)) {
+        seen.add(v.link);
+        unique.push(v);
+      }
     }
 
-    // shuffle biar campur
-    allVideos.sort(() => Math.random() - 0.5);
+    // ================= SHUFFLE =================
+    unique.sort(() => 0.5 - Math.random());
 
     res.setHeader("Cache-Control", "s-maxage=60");
+
     res.status(200).json({
-      videos: allVideos
+      videos: unique,
+      nextPage: page + 1
     });
 
   } catch (err) {
-    console.log("FATAL ERROR:", err);
+    console.log("FATAL:", err);
 
     res.status(200).json({
       videos: [],
-      error: "Server error but handled"
+      nextPage: page + 1
     });
   }
 }
