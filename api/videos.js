@@ -33,7 +33,7 @@ export default async function handler(req, res) {
     if (vizeyKey) {
       try {
         const r2 = await fetch(
-          `https://vizey.co/api/v1/list?apikey=${vizeyKey}&page=${page}&limit=20`
+          `https://vizey.net/api/v1/list?apikey=${vizeyKey}&page=${page}&limit=20`
         );
 
         const text = await r2.text();
@@ -50,7 +50,7 @@ export default async function handler(req, res) {
             ...d2.data.map(v => ({
               title: v.title,
               thumbnail: v.thumbnail,
-              link: v.url || v.embed_url,
+              link: v.url || v.embed_url || `https://vizey.net/v/${v.id}`
               source: "Vizey"
             }))
           );
