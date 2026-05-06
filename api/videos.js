@@ -37,30 +37,30 @@ try {
 
   console.log("VIZEY RAW:", JSON.stringify(d));
 
-  if (d && d.success && Array.isArray(d.data)) {
+  if (!vizeyKey) {
+  console.log("❌ VIZEY API KEY TIDAK ADA");
+} else {
+  try {
+    const r = await fetch(
+      `https://vizey.co/api/v1/list?apikey=${vizeyKey}&page=${page}&limit=10`
+    );
 
-    const vids = d.data.map(v => ({
-      title: v.title || "No title",
-      thumbnail: v.thumbnail,
-      link: v.url ? v.url : v.embed_url, // 🔥 fallback penting
-      source: "Vizey"
-    }));
+    const d = await r.json();
 
-    console.log("VIZEY COUNT:", vids.length);
+    console.log("✅ VIZEY RESPONSE:", d?.data?.length);
 
-    allVideos.push(...vids);
+    if (d && d.success && Array.isArray(d.data)) {
+      const vids = d.data.map(v => ({
+        title: v.title,
+        thumbnail: v.thumbnail,
+        link: v.url || v.embed_url,
+        source: "Vizey"
+      }));
+
+      allVideos.push(...vids);
+    }
+
+  } catch (e) {
+    console.log("Vizey fetch error:", e);
   }
-
-} catch (e) {
-  console.log("Vizey error:", e);
-}
-
-    res.status(200).json({
-      videos: allVideos,
-      hasMore: allVideos.length > 0
-    });
-
-  } catch (err) {
-    res.status(500).json({ error: "Server error" });
   }
-}
