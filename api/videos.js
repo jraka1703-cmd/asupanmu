@@ -1,66 +1,87 @@
-
 export default async function handler(req, res) {
   const vidaraKey = process.env.VIDARA_API_KEY;
   const vizeyKey = process.env.VIZEY_API_KEY;
 
-  const page = Number(req.query.page || 1);
+  let allVideos = [];
 
   try {
-    let allVideos = [];
-
     // ================= VIDARA =================
-    try {
-      const r = await fetch(
-        `https://api.vidara.so/v1/video/list?api_key=${vidaraKey}&page=${page}&limit=10`
-      );
-      const d = await r.json();
+    if (vidaraKey) {
+      try {
+        const r1 = await fetch(
+          `https://api.vidara.so/v1/video/list?api_key=${vidaraKey}&page=1&limit=20`
+        );
+        const d1 = await r1.json();
 
-      const vids = (d?.result?.videos || []).map(v => ({
-        title: v.title,
-        thumbnail: v.thumbnail,
-        link: `https://vidara.so/v/${v.filecode}`,
-        source: "Vidara"
-      }));
+        const vids1 = d1?.result?.videos || [];
 
-      allVideos.push(...vids);
-    } catch (e) {
-      console.log("Vidara error");
+        allVideos.push(
+          ...vids1.map(v => ({
+            title: v.title,
+            thumbnail: v.thumbnail,
+            link: `https://vidara.so/v/${v.filecode}`,
+            source: "Vidara"
+          }))
+        );
+      } catch (e) {
+        console.log("Vidara error:", e);
+      }
     }
 
     // ================= VIZEY =================
-try {
-  const r = await fetch(
-    `https://vizey.co/api/v1/list?apikey=${vizeyKey}&page=${page}&limit=10`
-  );
+    if (vizeyKey) {
+      try {
+        const r2 = await fetch(
+          `https://vizey.co/api/v1/list?apikey=${vizeyKey}&page=1&limit=20`
+        );
 
-  const d = await r.json();
+        const text = await r2.text(); // 🔥 SAFE PARSE
 
-  console.log("VIZEY RAW:", JSON.stringify(d));
+        let d2;
+        try {
+          d2 = JSON.parse(text);
+        } catch {
+          console.log("Vizey bukan JSON:", text);
+          d2 = null;
+        }
 
-  if (!vizeyKey) {
-  console.log("❌ VIZEY API KEY TIDAK ADA");
-} else {
-  try {
-    const r = await fetch(
-      `https://vizey.co/api/v1/list?apikey=${vizeyKey}&page=${page}&limit=10`
-    );
-
-    const d = await r.json();
-
-    console.log("✅ VIZEY RESPONSE:", d?.data?.length);
-
-    if (d && d.success && Array.isArray(d.data)) {
-      const vids = d.data.map(v => ({
-        title: v.title,
-        thumbnail: v.thumbnail,
-        link: v.url || v.embed_url,
-        source: "Vizey"
-      }));
-
-      allVideos.push(...vids);
+        if (d2 && d2.success && Array.isArray(d2.data)) {
+          allVideos.push(
+            ...d2.data.map(v => ({
+              title: v.title,
+              thumbnail: v.thumbnail,
+              link: v.url || v.embed_url,
+              source: "Vizey"
+            }))
+          );
+        }
+      } catch (e) {
+        console.log("Vizey error:", e);
+      }
     }
 
-  } catch (e) {
-    console.log("Vizey fetch error:", e);
+    // ================= FALLBACK =================
+    if (allVideos.length === 0) {
+      return res.status(200).json({
+        videos: [],
+        error: "No data from APIs"
+      });
+    }
+
+    // shuffle biar campur
+    allVideos.sort(() => Math.random() - 0.5);
+
+    res.setHeader("Cache-Control", "s-maxage=60");
+    res.status(200).json({
+      videos: allVideos
+    });
+
+  } catch (err) {
+    console.log("FATAL ERROR:", err);
+
+    res.status(200).json({
+      videos: [],
+      error: "Server error but handled"
+    });
   }
-  }
+}
