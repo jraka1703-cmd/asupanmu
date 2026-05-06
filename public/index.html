@@ -45,10 +45,10 @@ body {
 }
 
 .card, .ad-card {
-  position: relative;
   border-radius: 15px;
   overflow: hidden;
   background: #111;
+  position: relative;
 }
 
 .card img {
@@ -65,11 +65,7 @@ body {
   background: linear-gradient(transparent, black);
 }
 
-/* Native Ad style biar nyaru */
 .ad-card {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   height: 200px;
 }
 </style>
@@ -79,69 +75,86 @@ body {
 
 <div class="navbar">
   <div class="title">Asupanmu</div>
-  <input id="search" class="search" placeholder="Search...">
+  <input id="search" class="search" placeholder="Search video...">
 </div>
 
 <div id="videos" class="container"></div>
 
-<!-- 🔥 SOCIAL BAR (langsung dari Adsterra) -->
-<script type="text/javascript">
-  // GANTI dengan script social bar kamu dari Adsterra
-</script>
-
 <script>
 let videosGlobal = [];
-let popShown = false;
+let page = 1;
+let loading = false;
+let hasMore = true;
 
-// 🔥 POPUNDER CONTROL (1x saja)
+// 🔥 Popunder (1x saja)
 function triggerPopunder() {
   if (!localStorage.getItem("popShown")) {
     localStorage.setItem("popShown", "true");
 
-    // ⚠️ GANTI dengan script popunder dari Adsterra
-    window.open("https://www.profitablecpmratenetwork.com/s6szeryj1j?key=67a910e3b4387aa420b25f4a4bfa41b1", "_blank");
+    window.open(
+      "https://www.profitablecpmratenetwork.com/s6szeryj1j?key=67a910e3b4387aa420b25f4a4bfa41b1",
+      "_blank"
+    );
   }
 }
 
+// 🔥 Load videos
 async function loadVideos() {
-  const res = await fetch('/api/videos');
+  if (loading || !hasMore) return;
+
+  loading = true;
+
+  const res = await fetch(`/api/videos?page=${page}`);
   const data = await res.json();
 
-  videosGlobal = data;
-  render(data);
+  videosGlobal.push(...data.videos);
+  render(data.videos);
+
+  hasMore = data.hasMore;
+  page++;
+
+  loading = false;
 }
 
+// 🔥 Native Ads inject (SCRIPT KAMU)
+function createNativeAd() {
+  const ad = document.createElement('div');
+  ad.className = 'ad-card';
+
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = "https://pl29343712.profitablecpmratenetwork.com/d6c7cfa2fbe3ee841c92a4f50371bf35/invoke.js";
+
+  const container = document.createElement('div');
+  container.id = "container-d6c7cfa2fbe3ee841c92a4f50371bf35";
+
+  ad.appendChild(script);
+  ad.appendChild(container);
+
+  return ad;
+}
+
+// 🔥 Render video + ads
 function render(videos) {
   const container = document.getElementById('videos');
-  container.innerHTML = "";
 
   videos.forEach((v, i) => {
 
-    // 🎯 INSERT NATIVE ADS TIAP 6 VIDEO
-    if (i !== 0 && i % 6 === 0) {
-      const ad = document.createElement('div');
-      ad.className = 'ad-card';
-
-      ad.innerHTML = `
-        <!-- 🔥 GANTI DENGAN NATIVE BANNER CODE -->
-        <script type="text/javascript">
-          // paste native banner adsterra disini
-        <\/script>
-      `;
-
-      container.appendChild(ad);
+    // Native ads tiap 6 video
+    if ((videosGlobal.length + i) % 6 === 0) {
+      container.appendChild(createNativeAd());
     }
 
     const el = document.createElement('div');
     el.className = 'card';
 
     el.innerHTML = `
-      <img src="${v.thumbnail}">
+      <img src="${v.thumbnail}" loading="lazy">
       <div class="card-title">${v.title}</div>
     `;
 
     el.onclick = () => {
-      triggerPopunder(); // 🔥 trigger iklan hanya saat klik
+      triggerPopunder();
       window.location.href = `https://vidara.so/v/${v.filecode}`;
     };
 
@@ -149,9 +162,19 @@ function render(videos) {
   });
 }
 
-// SEARCH
+// 🔥 Infinite scroll
+window.addEventListener('scroll', () => {
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
+    loadVideos();
+  }
+});
+
+// 🔍 Search
 document.getElementById('search').addEventListener('input', e => {
   const q = e.target.value.toLowerCase();
+
+  const container = document.getElementById('videos');
+  container.innerHTML = "";
 
   const filtered = videosGlobal.filter(v =>
     v.title.toLowerCase().includes(q)
@@ -160,8 +183,12 @@ document.getElementById('search').addEventListener('input', e => {
   render(filtered);
 });
 
+// init
 loadVideos();
 </script>
+
+<!-- 🔥 SOCIAL BAR (SCRIPT KAMU) -->
+<script src="https://pl29343713.profitablecpmratenetwork.com/9a/69/24/9a6924d62fcb5f212667f72bfbb2378f.js"></script>
 
 </body>
 </html>
