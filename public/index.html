@@ -9,8 +9,8 @@
 body {
   margin: 0;
   background: #0d0d0d;
-  color: white;
   font-family: sans-serif;
+  color: white;
 }
 
 .navbar {
@@ -22,19 +22,32 @@ body {
 }
 
 .title {
-  color: #7f5af0;
+  font-size: 20px;
   font-weight: bold;
+  color: #7f5af0;
+}
+
+.search {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 20px;
+  border: none;
+  background: #1a1a1a;
+  color: white;
 }
 
 .container {
   display: grid;
-  grid-template-columns: repeat(2,1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   padding: 10px;
 }
 
 .card {
   position: relative;
+  border-radius: 15px;
+  overflow: hidden;
 }
 
 .card img {
@@ -46,22 +59,13 @@ body {
 .card-title {
   position: absolute;
   bottom: 0;
+  padding: 10px;
+  font-size: 13px;
   background: linear-gradient(transparent, black);
-  padding: 8px;
-  font-size: 12px;
 }
 
-.badge {
-  position: absolute;
-  top: 5px;
-  left: 5px;
-  background: rgba(0,0,0,0.7);
-  padding: 2px 6px;
-  font-size: 10px;
-}
-
-.ad {
-  height: 200px;
+.ads {
+  padding: 10px;
 }
 </style>
 </head>
@@ -70,97 +74,88 @@ body {
 
 <div class="navbar">
   <div class="title">Asupanmu</div>
+  <input id="search" class="search" placeholder="Search...">
+</div>
+
+<!-- ADS TOP -->
+<div class="ads">
+  <script async src="https://pl29343712.profitablecpmratenetwork.com/d6c7cfa2fbe3ee841c92a4f50371bf35/invoke.js"></script>
 </div>
 
 <div id="videos" class="container"></div>
 
 <script>
+let videosGlobal = [];
 let page = 1;
 let loading = false;
-let adCount = 0;
 
-// POPUNDER 1x
-function pop() {
-  if (!localStorage.getItem("p")) {
-    localStorage.setItem("p", 1);
-    window.open("https://www.profitablecpmratenetwork.com/s6szeryj1j?key=67a910e3b4387aa420b25f4a4bfa41b1");
-  }
-}
-
-// LOAD DATA
-async function load() {
+async function loadVideos() {
   if (loading) return;
   loading = true;
 
-  const r = await fetch(`/api/videos?page=${page}`);
-  const d = await r.json();
+  const res = await fetch(`/api/videos?page=${page}`);
+  const data = await res.json();
 
-  render(d.videos);
+  videosGlobal.push(...data.videos);
 
-  page++;
+  render(videosGlobal);
+
+  page = data.nextPage;
   loading = false;
 }
 
-// ADS FIX (NO DUPLICATE ID)
-function adUnit() {
-  const div = document.createElement("div");
-  div.className = "ad";
-
-  const script = document.createElement("script");
-  script.src = "https://pl29343712.profitablecpmratenetwork.com/d6c7cfa2fbe3ee841c92a4f50371bf35/invoke.js";
-  script.async = true;
-
-  setTimeout(() => {
-    div.appendChild(script);
-  }, 200);
-
-  return div;
-}
-
-// RENDER
 function render(videos) {
-  const c = document.getElementById("videos");
+  const container = document.getElementById('videos');
+  container.innerHTML = "";
 
-  videos.forEach(v => {
-
-    adCount++;
-
-    // iklan tiap 6 video
-    if (adCount > 4 && adCount % 6 === 0) {
-      c.appendChild(adUnit());
-    }
-
-    const el = document.createElement("div");
-    el.className = "card";
+  videos.forEach((v, i) => {
+    const el = document.createElement('div');
+    el.className = 'card';
 
     el.innerHTML = `
       <img src="${v.thumbnail}">
-      <div class="badge">${v.source}</div>
       <div class="card-title">${v.title}</div>
     `;
 
     el.onclick = () => {
-      pop();
       window.location.href = v.link;
     };
 
-    c.appendChild(el);
+    container.appendChild(el);
+
+    // 🔥 inject ads tiap 8 video
+    if ((i + 1) % 8 === 0) {
+      const ads = document.createElement("div");
+      ads.className = "ads";
+      ads.innerHTML = `
+        <script src="https://pl29343713.profitablecpmratenetwork.com/9a/69/24/9a6924d62fcb5f212667f72bfbb2378f.js"><\/script>
+      `;
+      container.appendChild(ads);
+    }
   });
 }
 
-// SCROLL LOAD
+// SEARCH
+document.getElementById('search').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase();
+
+  const filtered = videosGlobal.filter(v =>
+    v.title.toLowerCase().includes(q)
+  );
+
+  render(filtered);
+});
+
+// INFINITE SCROLL
 window.addEventListener("scroll", () => {
   if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
-    load();
+    loadVideos();
   }
 });
 
-// INIT
-load();
+// FIRST LOAD
+loadVideos();
 </script>
-
-<!-- SOCIAL BAR -->
-<script src="https://pl29343713.profitablecpmratenetwork.com/9a/69/24/9a6924d62fcb5f212667f72bfbb2378f.js"></script>
 
 </body>
 </html>
