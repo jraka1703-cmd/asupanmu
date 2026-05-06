@@ -9,8 +9,8 @@
 body {
   margin: 0;
   background: #0d0d0d;
-  font-family: sans-serif;
   color: white;
+  font-family: sans-serif;
 }
 
 .navbar {
@@ -22,32 +22,18 @@ body {
 }
 
 .title {
-  font-size: 20px;
-  font-weight: bold;
   color: #7f5af0;
-}
-
-.search {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 20px;
-  border: none;
-  background: #1a1a1a;
-  color: white;
+  font-weight: bold;
 }
 
 .container {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2,1fr);
   gap: 10px;
   padding: 10px;
 }
 
-.card, .ad-card {
-  border-radius: 15px;
-  overflow: hidden;
-  background: #111;
+.card {
   position: relative;
 }
 
@@ -60,22 +46,21 @@ body {
 .card-title {
   position: absolute;
   bottom: 0;
-  padding: 10px;
-  font-size: 13px;
   background: linear-gradient(transparent, black);
+  padding: 8px;
+  font-size: 12px;
 }
 
 .badge {
   position: absolute;
   top: 5px;
   left: 5px;
-  background: rgba(0,0,0,0.6);
-  padding: 3px 6px;
+  background: rgba(0,0,0,0.7);
+  padding: 2px 6px;
   font-size: 10px;
-  border-radius: 5px;
 }
 
-.ad-card {
+.ad {
   height: 200px;
 }
 </style>
@@ -85,121 +70,96 @@ body {
 
 <div class="navbar">
   <div class="title">Asupanmu</div>
-  <input id="search" class="search" placeholder="Search video...">
 </div>
 
 <div id="videos" class="container"></div>
 
 <script>
-let videosGlobal = [];
 let page = 1;
 let loading = false;
-let hasMore = true;
-let adIndex = 0;
+let adCount = 0;
 
-// 🔥 Popunder (1x saja)
-function triggerPopunder() {
-  if (!localStorage.getItem("popShown")) {
-    localStorage.setItem("popShown", "true");
-
-    window.open(
-      "https://www.profitablecpmratenetwork.com/s6szeryj1j?key=67a910e3b4387aa420b25f4a4bfa41b1",
-      "_blank"
-    );
+// POPUNDER 1x
+function pop() {
+  if (!localStorage.getItem("p")) {
+    localStorage.setItem("p", 1);
+    window.open("https://www.profitablecpmratenetwork.com/s6szeryj1j?key=67a910e3b4387aa420b25f4a4bfa41b1");
   }
 }
 
-// 🔥 Load videos
-async function loadVideos() {
-  if (loading || !hasMore) return;
-
+// LOAD DATA
+async function load() {
+  if (loading) return;
   loading = true;
 
-  const res = await fetch(`/api/videos?page=${page}`);
-  const data = await res.json();
+  const r = await fetch(`/api/videos?page=${page}`);
+  const d = await r.json();
 
-  videosGlobal.push(...data.videos);
-  render(data.videos);
+  render(d.videos);
 
   page++;
   loading = false;
 }
 
-// 🔥 Native Ads (script kamu)
-function createNativeAd() {
-  const ad = document.createElement('div');
-  ad.className = 'ad-card';
+// ADS FIX (NO DUPLICATE ID)
+function adUnit() {
+  const div = document.createElement("div");
+  div.className = "ad";
 
-  const script = document.createElement('script');
-  script.async = true;
+  const script = document.createElement("script");
   script.src = "https://pl29343712.profitablecpmratenetwork.com/d6c7cfa2fbe3ee841c92a4f50371bf35/invoke.js";
+  script.async = true;
 
-  const container = document.createElement('div');
-  container.id = "container-d6c7cfa2fbe3ee841c92a4f50371bf35";
+  setTimeout(() => {
+    div.appendChild(script);
+  }, 200);
 
-  ad.appendChild(script);
-  ad.appendChild(container);
-
-  return ad;
+  return div;
 }
 
-// 🔥 Render
+// RENDER
 function render(videos) {
-  const container = document.getElementById('videos');
+  const c = document.getElementById("videos");
 
-  videos.forEach((v) => {
+  videos.forEach(v => {
 
-    adIndex++;
+    adCount++;
 
-    // Delay + tiap 6 item
-    if (adIndex > 4 && adIndex % 6 === 0) {
-      container.appendChild(createNativeAd());
+    // iklan tiap 6 video
+    if (adCount > 4 && adCount % 6 === 0) {
+      c.appendChild(adUnit());
     }
 
-    const el = document.createElement('div');
-    el.className = 'card';
+    const el = document.createElement("div");
+    el.className = "card";
 
     el.innerHTML = `
-      <img src="${v.thumbnail}" loading="lazy">
+      <img src="${v.thumbnail}">
       <div class="badge">${v.source}</div>
       <div class="card-title">${v.title}</div>
     `;
 
     el.onclick = () => {
-      triggerPopunder();
+      pop();
       window.location.href = v.link;
     };
 
-    container.appendChild(el);
+    c.appendChild(el);
   });
 }
 
-// 🔥 Infinite scroll
-window.addEventListener('scroll', () => {
+// SCROLL LOAD
+window.addEventListener("scroll", () => {
   if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
-    loadVideos();
+    load();
   }
 });
 
-// 🔍 Search
-document.getElementById('search').addEventListener('input', e => {
-  const q = e.target.value.toLowerCase();
-
-  const container = document.getElementById('videos');
-  container.innerHTML = "";
-
-  const filtered = videosGlobal.filter(v =>
-    v.title.toLowerCase().includes(q)
-  );
-
-  render(filtered);
-});
-
-// init
-loadVideos();
+// INIT
+load();
 </script>
 
-<!-- 🔥 SOCIAL BAR -->
+<!-- SOCIAL BAR -->
 <script src="https://pl29343713.profitablecpmratenetwork.com/9a/69/24/9a6924d62fcb5f212667f72bfbb2378f.js"></script>
 
 </body>
