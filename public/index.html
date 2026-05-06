@@ -44,10 +44,11 @@ body {
   padding: 10px;
 }
 
-.card {
+.card, .ad-card {
   position: relative;
   border-radius: 15px;
   overflow: hidden;
+  background: #111;
 }
 
 .card img {
@@ -64,8 +65,12 @@ body {
   background: linear-gradient(transparent, black);
 }
 
-.ads {
-  padding: 10px;
+/* Native Ad style biar nyaru */
+.ad-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
 }
 </style>
 </head>
@@ -77,31 +82,33 @@ body {
   <input id="search" class="search" placeholder="Search...">
 </div>
 
-<!-- ADS TOP -->
-<div class="ads">
-  <script async src="https://pl29343712.profitablecpmratenetwork.com/d6c7cfa2fbe3ee841c92a4f50371bf35/invoke.js"></script>
-</div>
-
 <div id="videos" class="container"></div>
+
+<!-- 🔥 SOCIAL BAR (langsung dari Adsterra) -->
+<script type="text/javascript">
+  // GANTI dengan script social bar kamu dari Adsterra
+</script>
 
 <script>
 let videosGlobal = [];
-let page = 1;
-let loading = false;
+let popShown = false;
+
+// 🔥 POPUNDER CONTROL (1x saja)
+function triggerPopunder() {
+  if (!localStorage.getItem("popShown")) {
+    localStorage.setItem("popShown", "true");
+
+    // ⚠️ GANTI dengan script popunder dari Adsterra
+    window.open("https://www.profitablecpmratenetwork.com/s6szeryj1j?key=67a910e3b4387aa420b25f4a4bfa41b1", "_blank");
+  }
+}
 
 async function loadVideos() {
-  if (loading) return;
-  loading = true;
-
-  const res = await fetch(`/api/videos?page=${page}`);
+  const res = await fetch('/api/videos');
   const data = await res.json();
 
-  videosGlobal.push(...data.videos);
-
-  render(videosGlobal);
-
-  page = data.nextPage;
-  loading = false;
+  videosGlobal = data;
+  render(data);
 }
 
 function render(videos) {
@@ -109,6 +116,22 @@ function render(videos) {
   container.innerHTML = "";
 
   videos.forEach((v, i) => {
+
+    // 🎯 INSERT NATIVE ADS TIAP 6 VIDEO
+    if (i !== 0 && i % 6 === 0) {
+      const ad = document.createElement('div');
+      ad.className = 'ad-card';
+
+      ad.innerHTML = `
+        <!-- 🔥 GANTI DENGAN NATIVE BANNER CODE -->
+        <script type="text/javascript">
+          // paste native banner adsterra disini
+        <\/script>
+      `;
+
+      container.appendChild(ad);
+    }
+
     const el = document.createElement('div');
     el.className = 'card';
 
@@ -118,20 +141,11 @@ function render(videos) {
     `;
 
     el.onclick = () => {
-      window.location.href = v.link;
+      triggerPopunder(); // 🔥 trigger iklan hanya saat klik
+      window.location.href = `https://vidara.so/v/${v.filecode}`;
     };
 
     container.appendChild(el);
-
-    // 🔥 inject ads tiap 8 video
-    if ((i + 1) % 8 === 0) {
-      const ads = document.createElement("div");
-      ads.className = "ads";
-      ads.innerHTML = `
-        <script src="https://pl29343713.profitablecpmratenetwork.com/9a/69/24/9a6924d62fcb5f212667f72bfbb2378f.js"><\/script>
-      `;
-      container.appendChild(ads);
-    }
   });
 }
 
@@ -146,14 +160,6 @@ document.getElementById('search').addEventListener('input', e => {
   render(filtered);
 });
 
-// INFINITE SCROLL
-window.addEventListener("scroll", () => {
-  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
-    loadVideos();
-  }
-});
-
-// FIRST LOAD
 loadVideos();
 </script>
 
