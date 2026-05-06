@@ -28,25 +28,32 @@ export default async function handler(req, res) {
     }
 
     // ================= VIZEY =================
-    try {
-      const r = await fetch(
-        `https://vizey.co/api/v1/list?apikey=${vizeyKey}&page=${page}`
-      );
-      const d = await r.json();
+try {
+  const r = await fetch(
+    `https://vizey.co/api/v1/list?apikey=${vizeyKey}&page=${page}&limit=10`
+  );
 
-      console.log("VIZEY DATA:", d);
+  const d = await r.json();
 
-      const vids = (d?.data || []).map(v => ({
-        title: v.title,
-        thumbnail: v.thumbnail,
-        link: v.url || v.embed_url,
-        source: "Vizey"
-      }));
+  console.log("VIZEY RAW:", JSON.stringify(d));
 
-      allVideos.push(...vids);
-    } catch (e) {
-      console.log("Vizey error");
-    }
+  if (d && d.success && Array.isArray(d.data)) {
+
+    const vids = d.data.map(v => ({
+      title: v.title || "No title",
+      thumbnail: v.thumbnail,
+      link: v.url ? v.url : v.embed_url, // 🔥 fallback penting
+      source: "Vizey"
+    }));
+
+    console.log("VIZEY COUNT:", vids.length);
+
+    allVideos.push(...vids);
+  }
+
+} catch (e) {
+  console.log("Vizey error:", e);
+}
 
     res.status(200).json({
       videos: allVideos,
