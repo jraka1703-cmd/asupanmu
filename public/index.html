@@ -65,6 +65,16 @@ body {
   background: linear-gradient(transparent, black);
 }
 
+.badge {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  background: rgba(0,0,0,0.6);
+  padding: 3px 6px;
+  font-size: 10px;
+  border-radius: 5px;
+}
+
 .ad-card {
   height: 200px;
 }
@@ -85,6 +95,7 @@ let videosGlobal = [];
 let page = 1;
 let loading = false;
 let hasMore = true;
+let adIndex = 0;
 
 // 🔥 Popunder (1x saja)
 function triggerPopunder() {
@@ -110,13 +121,11 @@ async function loadVideos() {
   videosGlobal.push(...data.videos);
   render(data.videos);
 
-  hasMore = data.hasMore;
   page++;
-
   loading = false;
 }
 
-// 🔥 Native Ads inject (SCRIPT KAMU)
+// 🔥 Native Ads (script kamu)
 function createNativeAd() {
   const ad = document.createElement('div');
   ad.className = 'ad-card';
@@ -134,14 +143,16 @@ function createNativeAd() {
   return ad;
 }
 
-// 🔥 Render video + ads
+// 🔥 Render
 function render(videos) {
   const container = document.getElementById('videos');
 
-  videos.forEach((v, i) => {
+  videos.forEach((v) => {
 
-    // Native ads tiap 6 video
-    if ((videosGlobal.length + i) % 6 === 0) {
+    adIndex++;
+
+    // Delay + tiap 6 item
+    if (adIndex > 4 && adIndex % 6 === 0) {
       container.appendChild(createNativeAd());
     }
 
@@ -150,12 +161,13 @@ function render(videos) {
 
     el.innerHTML = `
       <img src="${v.thumbnail}" loading="lazy">
+      <div class="badge">${v.source}</div>
       <div class="card-title">${v.title}</div>
     `;
 
     el.onclick = () => {
       triggerPopunder();
-      window.location.href = `https://vidara.so/v/${v.filecode}`;
+      window.location.href = v.link;
     };
 
     container.appendChild(el);
@@ -187,7 +199,7 @@ document.getElementById('search').addEventListener('input', e => {
 loadVideos();
 </script>
 
-<!-- 🔥 SOCIAL BAR (SCRIPT KAMU) -->
+<!-- 🔥 SOCIAL BAR -->
 <script src="https://pl29343713.profitablecpmratenetwork.com/9a/69/24/9a6924d62fcb5f212667f72bfbb2378f.js"></script>
 
 </body>
