@@ -5,7 +5,7 @@ export default async function handler(req, res) {
 
   try {
     const response = await fetch(
-      `https://api.vidara.so/v1/video/list?api_key=${API_KEY}&page=${page}&limit=20`
+      `https://api.vidara.to/v1/video/list?api_key=${API_KEY}&page=${page}&limit=20`
     );
 
     const data = await response.json();
